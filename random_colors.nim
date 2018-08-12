@@ -1,9 +1,11 @@
 from os import nil
 from osproc import nil
-from strutils import nil
+from strutils import `%`
+from not_nil import prove
 
 type
   Location = distinct (string not nil)
+
 
 proc with_default(str : string, default : string not nil): string not nil {.noSideEffect.} =
   if isNil(str) or str == "":
@@ -13,10 +15,7 @@ proc with_default(str : string, default : string not nil): string not nil {.noSi
 
 proc strip(str : string not nil): string not nil {.noSideEffect.} =
   let stripped = strutils.strip(str)
-  if isNil(stripped):
-    return ""
-  else:
-    return stripped
+  prove(stripped)
 
 proc root(): string not nil =
   let (git_root, _) =
@@ -35,21 +34,18 @@ proc branch(): string not nil =
   return strip(with_default(git_branch, "no-git-branch"))
 
 proc key(): string not nil =
-  let str = root() & ":" & branch()
-  if isNil(str):
-    assert(false)
-  else:
-    return str
+  let str = "$1:$2" % [root(), branch()]
+  return prove(str)
 
-## Encodes keys similar to fish's `escape --type var` for backwards compatibilty
-## with the older fish version of this code.
+## Encodes keys similar to fish's `escape --type var` for backwards
+## compatibility with the older fish version of this code.
 proc encode(str : string not nil): Location {.noSideEffect.} =
   var encoded = ""
   for c in str:
     if strutils.isAlphaNumeric(c):
       add(encoded, c)
     else:
-      add(encoded, "_" & strutils.toHex(c) & "_")
+      add(encoded, "_$1_" % strutils.toHex(c))
   return (Location encoded)
 
 
