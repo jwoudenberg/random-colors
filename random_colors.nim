@@ -1,9 +1,12 @@
 from os import nil
+from ospaths import nil
 from osproc import nil
 from strutils import `%`
 from not_nil import prove
 from httpclient import nil
 import json
+
+const schemeDir = ".colorschemes"
 
 type
   Location = distinct (string not nil)
@@ -11,6 +14,17 @@ type
   Color = tuple[red: ColorValue, green: ColorValue, blue: ColorValue]
   Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color, background: Color]
 
+proc `%`(color: Color): JsonNode =
+  return %* [color.red, color.green, color.blue ]
+
+proc `%`(scheme: Scheme): JsonNode =
+  return %* [
+      % scheme.foreground,
+      % scheme.light,
+      % scheme.main,
+      % scheme.dark,
+      % scheme.background
+    ]
 
 proc with_default(str : string, default : string not nil): string not nil {.noSideEffect.} =
   if isNil(str) or str == "":
@@ -53,6 +67,9 @@ proc encode(str : string not nil): Location {.noSideEffect.} =
       add(encoded, "_$1_" % strutils.toHex(c))
   return (Location encoded)
 
+proc get_location(): Location =
+  return encode(key())
+
 proc parse_color_value(value: JsonNode): ColorValue =
   return ColorValue(getNum(value))
 
@@ -63,17 +80,51 @@ proc parse_color(color: JsonNode): Color =
     blue: parse_color_value(color[2])
   )
 
-proc request_colors(loc : Location): Scheme =
+proc scheme_from_json(json: JsonNode): Scheme {.noSideEffect.} =
+  return (
+    foreground: parse_color(json[0]),
+    light: parse_color(json[1]),
+    main: parse_color(json[2]),
+    dark: parse_color(json[3]),
+    background: parse_color(json[4])
+  )
+
+proc request_scheme(): Scheme =
   let client = httpclient.newHttpClient()
   var body = %* {"model": "ui"}
   let response = httpclient.postContent(client, "http://colormind.io/api/", pretty(body))
   let json = parseJson(response)
-  return (
-    foreground: parse_color(json["result"][0]),
-    light: parse_color(json["result"][1]),
-    main: parse_color(json["result"][2]),
-    dark: parse_color(json["result"][3]),
-    background: parse_color(json["result"][4])
-  )
+  return scheme_from_json(json["result"])
 
-echo request_colors(encode(key()))
+proc scheme_file_path(location: Location): string =
+  let home = ospaths.getHomeDir()
+  return ospaths.joinPath([home, schemeDir, string(location)])
+
+proc save_scheme(location: Location, scheme : Scheme): void =
+  let filename = scheme_file_path(location)
+  let content = pretty(% scheme)
+  writeFile(filename, content)
+
+proc new_scheme(location: Location): Scheme =
+  result = request_scheme()
+  save_scheme(location, result)
+
+proc read_scheme(location: Location): Scheme =
+  let filename = scheme_file_path(location)
+  let content = readFile(filename)
+  let json = parseJson(content)
+  return scheme_from_json(json)
+
+proc load_scheme(location: Location): Scheme =
+  try:
+    result = read_scheme(location)
+  except IOError:
+    result = new_scheme(location)
+
+proc main(): void =
+  let location = get_location()
+  echo string(location)
+  let scheme = load_scheme(location)
+  echo scheme
+
+main()
