@@ -4,6 +4,7 @@ from osproc import nil
 from strutils import `%`
 from not_nil import prove
 from httpclient import nil
+from parseopt import nil
 import json
 
 const schemeDir = ".colorschemes"
@@ -115,11 +116,19 @@ proc readScheme(location: Location): Scheme =
   let json = parseJson(content)
   return schemeFromJson(json)
 
+proc refresh(): bool =
+  for kind, key, val in parseopt.getopt():
+    if key == "refresh": return true
+  return false
+
 proc loadScheme(location: Location): Scheme =
-  try:
-    result = readScheme(location)
-  except IOError:
+  if refresh():
     result = newScheme(location)
+  else:
+    try:
+      result = readScheme(location)
+    except IOError:
+      result = newScheme(location)
 
 proc setColor(key: string, color: Color): void =
   let hex = "$1$2$3" % [
