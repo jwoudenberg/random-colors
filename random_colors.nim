@@ -2,6 +2,9 @@ from os import nil
 from osproc import nil
 from strutils import nil
 
+type
+  Location = distinct (string not nil)
+
 proc with_default(str : string, default : string not nil): string not nil {.noSideEffect.} =
   if isNil(str) or str == "":
     return default
@@ -40,13 +43,14 @@ proc key(): string not nil =
 
 ## Encodes keys similar to fish's `escape --type var` for backwards compatibilty
 ## with the older fish version of this code.
-proc encode(str : string not nil): string not nil {.noSideEffect.} =
-  result = ""
+proc encode(str : string not nil): Location {.noSideEffect.} =
+  var encoded = ""
   for c in str:
     if strutils.isAlphaNumeric(c):
-      add(result, c)
+      add(encoded, c)
     else:
-      add(result, "_" & strutils.toHex(c) & "_")
+      add(encoded, "_" & strutils.toHex(c) & "_")
+  return (Location encoded)
 
 
-echo encode(key())
+echo string(encode(key()))
