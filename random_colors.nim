@@ -26,7 +26,7 @@ proc `%`(scheme: Scheme): JsonNode =
       % scheme.background
     ]
 
-proc with_default(str : string, default : string not nil): string not nil {.noSideEffect.} =
+proc withDefault(str : string, default : string not nil): string not nil {.noSideEffect.} =
   if isNil(str) or str == "":
     return default
   else:
@@ -37,20 +37,20 @@ proc strip(str : string not nil): string not nil {.noSideEffect.} =
   prove(stripped)
 
 proc root(): string not nil =
-  let (git_root, _) =
+  let (gitRoot, _) =
     osproc.execCmdEx(
       "git rev-parse --show-toplevel",
       options = { osproc.poUsePath }
     )
-  return strip(with_default(git_root, "no-git-root"))
+  return strip(withDefault(gitRoot, "no-git-root"))
 
 proc branch(): string not nil =
-  let (git_branch, _) =
+  let (gitBranch, _) =
     osproc.execCmdEx(
       "git rev-parse --abbrev-ref HEAD",
       options = { osproc.poUsePath }
     )
-  return strip(with_default(git_branch, "no-git-branch"))
+  return strip(withDefault(gitBranch, "no-git-branch"))
 
 proc key(): string not nil =
   let str = "$1:$2" % [root(), branch()]
@@ -67,64 +67,64 @@ proc encode(str : string not nil): Location {.noSideEffect.} =
       add(encoded, "_$1_" % strutils.toHex(c))
   return (Location encoded)
 
-proc get_location(): Location =
+proc getLocation(): Location =
   return encode(key())
 
-proc parse_color_value(value: JsonNode): ColorValue =
+proc parseColorValue(value: JsonNode): ColorValue =
   return ColorValue(getNum(value))
 
-proc parse_color(color: JsonNode): Color =
+proc parseColor(color: JsonNode): Color =
   return (
-    red: parse_color_value(color[0]),
-    green: parse_color_value(color[1]),
-    blue: parse_color_value(color[2])
+    red: parseColorValue(color[0]),
+    green: parseColorValue(color[1]),
+    blue: parseColorValue(color[2])
   )
 
-proc scheme_from_json(json: JsonNode): Scheme {.noSideEffect.} =
+proc schemeFromJson(json: JsonNode): Scheme {.noSideEffect.} =
   return (
-    foreground: parse_color(json[0]),
-    light: parse_color(json[1]),
-    main: parse_color(json[2]),
-    dark: parse_color(json[3]),
-    background: parse_color(json[4])
+    foreground: parseColor(json[0]),
+    light: parseColor(json[1]),
+    main: parseColor(json[2]),
+    dark: parseColor(json[3]),
+    background: parseColor(json[4])
   )
 
-proc request_scheme(): Scheme =
+proc requestScheme(): Scheme =
   let client = httpclient.newHttpClient()
   var body = %* {"model": "ui"}
   let response = httpclient.postContent(client, "http://colormind.io/api/", pretty(body))
   let json = parseJson(response)
-  return scheme_from_json(json["result"])
+  return schemeFromJson(json["result"])
 
-proc scheme_file_path(location: Location): string =
+proc schemeFilePath(location: Location): string =
   let home = ospaths.getHomeDir()
   return ospaths.joinPath([home, schemeDir, string(location)])
 
-proc save_scheme(location: Location, scheme : Scheme): void =
-  let filename = scheme_file_path(location)
+proc saveScheme(location: Location, scheme : Scheme): void =
+  let filename = schemeFilePath(location)
   let content = pretty(% scheme)
   writeFile(filename, content)
 
-proc new_scheme(location: Location): Scheme =
-  result = request_scheme()
-  save_scheme(location, result)
+proc newScheme(location: Location): Scheme =
+  result = requestScheme()
+  saveScheme(location, result)
 
-proc read_scheme(location: Location): Scheme =
-  let filename = scheme_file_path(location)
+proc readScheme(location: Location): Scheme =
+  let filename = schemeFilePath(location)
   let content = readFile(filename)
   let json = parseJson(content)
-  return scheme_from_json(json)
+  return schemeFromJson(json)
 
-proc load_scheme(location: Location): Scheme =
+proc loadScheme(location: Location): Scheme =
   try:
-    result = read_scheme(location)
+    result = readScheme(location)
   except IOError:
-    result = new_scheme(location)
+    result = newScheme(location)
 
 proc main(): void =
-  let location = get_location()
+  let location = getLocation()
   echo string(location)
-  let scheme = load_scheme(location)
+  let scheme = loadScheme(location)
   echo scheme
 
 main()
