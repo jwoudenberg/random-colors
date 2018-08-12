@@ -130,7 +130,7 @@ proc loadScheme(location: Location): Scheme =
     except IOError:
       result = newScheme(location)
 
-proc setColor(key: string, color: Color): void =
+proc setColor(key: string, color: Color): string not nil {.noSideEffect.} =
   let hex = "$1$2$3" % [
     strutils.toHex(color.red, 2),
     strutils.toHex(color.green, 2),
@@ -138,27 +138,29 @@ proc setColor(key: string, color: Color): void =
   ]
   # This is an iterm2 specific escape code for setting terminal colors.
   # See: https://iterm2.com/documentation-escape-codes.html
-  echo "\x1b]1337;SetColors=$1=$2\x07" % [key, hex]
+  let cmd = "\x1b]1337;SetColors=$1=$2\x07" % [key, hex]
+  return prove(cmd)
 
 proc setScheme(scheme: Scheme): void =
-  setColor("fg", scheme.foreground)
-  setColor("bg", scheme.background)
-  setColor("black", scheme.background)
-  setColor("red", scheme.dark)
-  setColor("green", scheme.main)
-  setColor("yellow", scheme.light)
-  setColor("blue", scheme.main)
-  setColor("magenta", scheme.dark)
-  setColor("cyan", scheme.light)
-  setColor("white", scheme.foreground)
-  setColor("br_black", scheme.background)
-  setColor("br_red", scheme.dark)
-  setColor("br_green", scheme.main)
-  setColor("br_yellow", scheme.light)
-  setColor("br_blue", scheme.main)
-  setColor("br_magenta", scheme.dark)
-  setColor("br_cyan", scheme.light)
-  setColor("br_white", scheme.foreground)
+  write(stdout, setColor("fg", scheme.foreground))
+  write(stdout, setColor("bg", scheme.background))
+  write(stdout, setColor("black", scheme.background))
+  write(stdout, setColor("red", scheme.dark))
+  write(stdout, setColor("green", scheme.main))
+  write(stdout, setColor("yellow", scheme.light))
+  write(stdout, setColor("blue", scheme.main))
+  write(stdout, setColor("magenta", scheme.dark))
+  write(stdout, setColor("cyan", scheme.light))
+  write(stdout, setColor("white", scheme.foreground))
+  write(stdout, setColor("br_black", scheme.background))
+  write(stdout, setColor("br_red", scheme.dark))
+  write(stdout, setColor("br_green", scheme.main))
+  write(stdout, setColor("br_yellow", scheme.light))
+  write(stdout, setColor("br_blue", scheme.main))
+  write(stdout, setColor("br_magenta", scheme.dark))
+  write(stdout, setColor("br_cyan", scheme.light))
+  write(stdout, setColor("br_white", scheme.foreground))
+  flushFile(stdout)
 
 proc main(): void =
   let location = getLocation()
