@@ -116,20 +116,6 @@ proc readScheme(location: Location): Scheme =
   let json = parseJson(content)
   return schemeFromJson(json)
 
-proc refresh(): bool =
-  for kind, key, val in parseopt.getopt():
-    if key == "refresh": return true
-  return false
-
-proc loadScheme(location: Location): Scheme =
-  if refresh():
-    result = newScheme(location)
-  else:
-    try:
-      result = readScheme(location)
-    except IOError:
-      result = newScheme(location)
-
 proc setColor(key: string, color: Color): string not nil {.noSideEffect.} =
   let hex = "$1$2$3" % [
     strutils.toHex(color.red, 2),
@@ -162,9 +148,42 @@ proc setScheme(scheme: Scheme): void =
   write(stdout, setColor("br_white", scheme.foreground))
   flushFile(stdout)
 
-proc main(): void =
+proc refresh(): void =
   let location = getLocation()
-  let scheme = loadScheme(location)
+  let scheme = newScheme(location)
   setScheme(scheme)
+
+proc load(): void =
+  let location = getLocation()
+  var scheme: Scheme
+  try:
+    scheme = readScheme(location)
+  except IOError:
+    scheme = newScheme(location)
+  setScheme(scheme)
+
+proc help(): void =
+  echo("Usage: random-colors [OPTION]")
+  echo("Load a random terminal color scheme for the current git project branch.")
+  echo("If a scheme has already been generated for this branch, reload it.")
+  echo("")
+  echo("  --help       Show this help message")
+  echo("  --refresh    Create a new color scheme for this branch, potentially overwriting an existing one.")
+
+proc main(): void =
+  for kind, key, val in parseopt.getopt():
+    case key:
+      of "refresh":
+        refresh()
+        return
+      of "help":
+        help()
+        return
+      else:
+        write(stderr, "Unknown command line argument: $1\n\n" % key)
+        help()
+        quit(QuitFailure)
+        return
+  load()
 
 main()
