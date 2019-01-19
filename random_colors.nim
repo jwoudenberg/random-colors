@@ -2,7 +2,6 @@ from os import nil
 from ospaths import nil
 from osproc import nil
 from strutils import `%`
-from not_nil import prove
 from httpclient import nil
 from parseopt import nil
 import json
@@ -10,7 +9,7 @@ import json
 const schemeDir = ".colorschemes"
 
 type
-  Location = distinct (string not nil)
+  Location = distinct (string)
   ColorValue = range[0..256]
   Color = tuple[red: ColorValue, green: ColorValue, blue: ColorValue]
   Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color, background: Color]
@@ -27,17 +26,16 @@ proc `%`(scheme: Scheme): JsonNode =
       % scheme.background
     ]
 
-proc withDefault(str : string, default : string not nil): string not nil {.noSideEffect.} =
+proc withDefault(str : string, default : string): string {.noSideEffect.} =
   if isNil(str) or str == "":
     return default
   else:
     return str
 
-proc strip(str : string not nil): string not nil {.noSideEffect.} =
-  let stripped = strutils.strip(str)
-  prove(stripped)
+proc strip(str : string): string {.noSideEffect.} =
+  strutils.strip(str)
 
-proc root(): string not nil =
+proc root(): string =
   let (gitRoot, _) =
     osproc.execCmdEx(
       "git rev-parse --show-toplevel",
@@ -45,7 +43,7 @@ proc root(): string not nil =
     )
   return strip(withDefault(gitRoot, "no-git-root"))
 
-proc branch(): string not nil =
+proc branch(): string =
   let (gitBranch, _) =
     osproc.execCmdEx(
       "git rev-parse --abbrev-ref HEAD",
@@ -53,13 +51,12 @@ proc branch(): string not nil =
     )
   return strip(withDefault(gitBranch, "no-git-branch"))
 
-proc key(): string not nil =
-  let str = "$1:$2" % [root(), branch()]
-  return prove(str)
+proc key(): string =
+  "$1:$2" % [root(), branch()]
 
 ## Encodes keys similar to fish's `escape --type var` for backwards
 ## compatibility with the older fish version of this code.
-proc encode(str : string not nil): Location {.noSideEffect.} =
+proc encode(str : string): Location {.noSideEffect.} =
   var encoded = ""
   for c in str:
     if strutils.isAlphaNumeric(c):
@@ -72,7 +69,7 @@ proc getLocation(): Location =
   return encode(key())
 
 proc parseColorValue(value: JsonNode): ColorValue =
-  return ColorValue(getNum(value))
+  return ColorValue(getBiggestInt(value))
 
 proc parseColor(color: JsonNode): Color =
   return (
@@ -116,7 +113,7 @@ proc readScheme(location: Location): Scheme =
   let json = parseJson(content)
   return schemeFromJson(json)
 
-proc setColor(key: string, color: Color): string not nil {.noSideEffect.} =
+proc setColor(key: string, color: Color): string {.noSideEffect.} =
   let hex = "$1$2$3" % [
     strutils.toHex(color.red, 2),
     strutils.toHex(color.green, 2),
@@ -124,8 +121,7 @@ proc setColor(key: string, color: Color): string not nil {.noSideEffect.} =
   ]
   # This is an iterm2 specific escape code for setting terminal colors.
   # See: https://iterm2.com/documentation-escape-codes.html
-  let cmd = "\x1b]1337;SetColors=$1=$2\x07" % [key, hex]
-  return prove(cmd)
+  "\x1b]1337;SetColors=$1=$2\x07" % [key, hex]
 
 proc setScheme(scheme: Scheme): void =
   write(stdout, setColor("fg", scheme.foreground))
@@ -175,15 +171,12 @@ proc main(): void =
     case key:
       of "refresh":
         refresh()
-        return
       of "help":
         help()
-        return
       else:
         write(stderr, "Unknown command line argument: $1\n\n" % key)
         help()
         quit(QuitFailure)
-        return
   load()
 
 main()

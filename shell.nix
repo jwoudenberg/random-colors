@@ -6,8 +6,8 @@ let
     };
 
   pkgsPath = fetch {
-    rev = "411cc559c052feb6e20a01fc6d5fa63cba09ce9a";
-    sha256 = "158xky2p5lfdd5gb1v7rl7ss5k31r2hwazn97srfviivx25karaw";
+    rev = "0b471f71fada5f1d9bb31037a5dfb1faa83134ba";
+    sha256 = "148vh3602ckm1vbqgs07fxwpdla62h37wspgy0bkcycqdavh7ra5";
   };
 
   pkgs = import pkgsPath { config = {}; };
