@@ -8,7 +8,7 @@ import json
 import strformat
 
 const schemeDir = ".colorschemes"
-const fishHookCode = staticRead("./conf.d/random-colors.fish")
+const fishHookCode = staticRead("./hooks/hook.fish")
 
 type
   Location = distinct (string)
