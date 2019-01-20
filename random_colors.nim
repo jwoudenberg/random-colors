@@ -72,7 +72,7 @@ proc getLocation(): Location =
   return encode(key())
 
 proc parseColorValue(value: JsonNode): ColorValue =
-  return ColorValue(getBiggestInt(value))
+  return ColorValue(getInt(value))
 
 proc parseColor(color: JsonNode): Color =
   return (
