@@ -5,8 +5,10 @@ from strutils import `%`
 from httpclient import nil
 from parseopt import nil
 import json
+import strformat
 
 const schemeDir = ".colorschemes"
+const fishHookCode = staticRead("./conf.d/random-colors.fish")
 
 type
   Location = distinct (string)
@@ -158,21 +160,37 @@ proc load(): void =
     scheme = newScheme(location)
   setScheme(scheme)
 
+proc hook(shell : string): void =
+  case shell:
+    of "fish":
+      echo(fishHookCode)
+    else:
+      write(stderr, fmt("Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
+      quit(QuitFailure)
+
 proc help(): void =
   echo("Usage: random-colors [OPTION]")
   echo("Load a random terminal color scheme for the current git project branch.")
   echo("If a scheme has already been generated for this branch, reload it.")
   echo("")
   echo("  --help       Show this help message")
-  echo("  --refresh    Create a new color scheme for this branch, potentially overwriting an existing one.")
+  echo("  --refresh    Create a new color scheme for this branch.")
+  echo("               If a color scheme already exists, it will be overwritten.")
+  echo("  --hook       Enable random-colors for your fish shell session.")
+  echo("               Usage: `random-colors --hook=fish | source`")
 
 proc main(): void =
   for kind, key, val in parseopt.getopt():
     case key:
       of "refresh":
         refresh()
+        return
       of "help":
         help()
+        return
+      of "hook":
+        hook(val)
+        return
       else:
         write(stderr, "Unknown command line argument: $1\n\n" % key)
         help()
