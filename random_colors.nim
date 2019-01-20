@@ -1,6 +1,7 @@
 from os import nil
 from ospaths import nil
 from osproc import nil
+from re import `re`
 from strutils import `%`
 from httpclient import nil
 from parseopt import nil
@@ -160,10 +161,23 @@ proc load(): void =
     scheme = newScheme(location)
   setScheme(scheme)
 
+proc makeAbsolute(path : string): string =
+  if os.isAbsolute(path):
+    return path
+  else:
+    let cwd = os.getCurrentDir()
+    return ospaths.joinPath([cwd, path])
+
+proc pathToSelfBin(): string =
+  let path = os.paramStr(0)
+  return makeAbsolute(path)
+
 proc hook(shell : string): void =
   case shell:
     of "fish":
-      echo(fishHookCode)
+      let bin = pathToSelfBin()
+      let hookCode = re.replace(fishHookCode, re"random_colors_bin_path", bin)
+      echo(hookCode)
     else:
       write(stderr, fmt("Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
       quit(QuitFailure)

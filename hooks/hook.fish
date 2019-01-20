@@ -1,7 +1,7 @@
 function __change-colors --on-event fish_postexec --description 'Maybe change colorscheme'
     status --is-command-substitution
     and return
-    random-colors &
+    random_colors_bin_path &
 end
 
 # Configure fish to use standard terminal colors
