@@ -1,6 +1,5 @@
-let
-  pkgs = import ./pkgs.nix;
-in
+{ pkgs ? import <nixpkgs> {} }:
+
 pkgs.mkShell {
   buildInputs = [ pkgs.nim ];
 }

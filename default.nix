@@ -1,4 +1,4 @@
-{ pkgs ? import ./pkgs.nix }:
+{ pkgs ? import <nixpkgs> {} }:
 
 pkgs.stdenv.mkDerivation rec {
   name = "random-colors-${version}";
