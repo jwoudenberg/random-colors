@@ -30,7 +30,7 @@ proc `%`(scheme: Scheme): JsonNode =
     ]
 
 proc withDefault(str : string, default : string): string {.noSideEffect.} =
-  if isNil(str) or str == "":
+  if str == "":
     return default
   else:
     return str
@@ -57,19 +57,8 @@ proc branch(): string =
 proc key(): string =
   "$1:$2" % [root(), branch()]
 
-## Encodes keys similar to fish's `escape --type var` for backwards
-## compatibility with the older fish version of this code.
-proc encode(str : string): Location {.noSideEffect.} =
-  var encoded = ""
-  for c in str:
-    if strutils.isAlphaNumeric(c):
-      add(encoded, c)
-    else:
-      add(encoded, "_$1_" % strutils.toHex(c))
-  return (Location encoded)
-
 proc getLocation(): Location =
-  return encode(key())
+  return Location strutils.toHex(key())
 
 proc parseColorValue(value: JsonNode): ColorValue =
   return ColorValue(getInt(value))
