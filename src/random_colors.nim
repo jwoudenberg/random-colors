@@ -16,7 +16,6 @@ type
 
 const schemeDir = "random-colors/schemas"
 const fishHookCode = staticRead("./hooks/hook.fish")
-const defaultLocation = Location "default"
 
 proc `%`(color: Color): JsonNode =
   return %* [color.red, color.green, color.blue ]
@@ -33,6 +32,13 @@ proc `%`(scheme: Scheme): JsonNode =
 proc strip(str : string): string {.noSideEffect.} =
   strutils.strip(str)
 
+proc toLocation(filename : string): Location =
+  let config = ospaths.getConfigDir()
+  return Location ospaths.joinPath([config, schemeDir, filename])
+
+proc defaultLocation() : Location =
+  return toLocation("default")
+
 proc getLocation(): Location =
   let (key, code) =
     osproc.execCmdEx(
@@ -40,9 +46,9 @@ proc getLocation(): Location =
       options = { osproc.poUsePath }
     )
   if code == 0:
-    return Location strutils.toHex(strip(key))
+    return toLocation(strutils.toHex(strip(key)))
   else:
-    return defaultLocation
+    return defaultLocation()
 
 proc parseColorValue(value: JsonNode): ColorValue =
   return ColorValue(getInt(value))
@@ -70,9 +76,8 @@ proc requestScheme(): Scheme =
   let json = parseJson(response)
   return schemeFromJson(json["result"])
 
-proc schemeFilePath(location: Location): string =
-  let config = ospaths.getConfigDir()
-  return ospaths.joinPath([config, schemeDir, string(location)])
+proc schemeFilePath(location: Location): string {.noSideEffect.} =
+  return string(location)
 
 proc saveScheme(location: Location, scheme : Scheme): void =
   let filename = schemeFilePath(location)
@@ -90,7 +95,7 @@ proc newScheme(location: Location): Scheme =
   # while the request is underway. The presence of this link will prevent
   # parallel invocations of `random-colors` from fetching their own schema.
   # Should a request fail the user won't see a new error for every prompt.
-  createSymlink(defaultLocation, location)
+  createSymlink(defaultLocation(), location)
   result = requestScheme()
   os.removeFile(schemeFilePath(location))
   saveScheme(location, result)
