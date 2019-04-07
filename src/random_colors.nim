@@ -8,14 +8,15 @@ from parseopt import nil
 import json
 import strformat
 
-const schemeDir = "random-colors/schemas"
-const fishHookCode = staticRead("./hooks/hook.fish")
-
 type
   Location = distinct (string)
   ColorValue = range[0..256]
   Color = tuple[red: ColorValue, green: ColorValue, blue: ColorValue]
   Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color, background: Color]
+
+const schemeDir = "random-colors/schemas"
+const fishHookCode = staticRead("./hooks/hook.fish")
+const defaultLocation = Location "default"
 
 proc `%`(color: Color): JsonNode =
   return %* [color.red, color.green, color.blue ]
@@ -32,19 +33,16 @@ proc `%`(scheme: Scheme): JsonNode =
 proc strip(str : string): string {.noSideEffect.} =
   strutils.strip(str)
 
-proc key(): string =
+proc getLocation(): Location =
   let (key, code) =
     osproc.execCmdEx(
       "git rev-parse --show-toplevel --abbrev-ref HEAD",
       options = { osproc.poUsePath }
     )
   if code == 0:
-    return strip(key)
+    return Location strutils.toHex(strip(key))
   else:
-    return "no-git"
-
-proc getLocation(): Location =
-  return Location strutils.toHex(key())
+    return defaultLocation
 
 proc parseColorValue(value: JsonNode): ColorValue =
   return ColorValue(getInt(value))
