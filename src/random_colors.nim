@@ -81,8 +81,19 @@ proc saveScheme(location: Location, scheme : Scheme): void =
   os.createDir(ospaths.parentDir(filename))
   writeFile(filename, content)
 
+proc createSymlink(src : Location, destination : Location): void =
+  if not os.fileExists(schemeFilePath(destination)):
+    os.createSymlink(schemeFilePath(src), schemeFilePath(destination))
+  
 proc newScheme(location: Location): Scheme =
+  # Getting a colorscheme might take some time, might even fail if the colormind
+  # website is down. To this end we will temporarily link to the default scheme
+  # while the request is underway. The presence of this link will prevent
+  # parallel invocations of `random-colors` from fetching their own schema.
+  # Should a request fail the user won't see a new error for every prompt.
+  createSymlink(defaultLocation, location)
   result = requestScheme()
+  os.removeFile(schemeFilePath(location))
   saveScheme(location, result)
 
 proc readScheme(location: Location): Scheme =
