@@ -12,13 +12,14 @@ type
   Location = distinct (string)
   ColorValue = range[0..256]
   Color = tuple[red: ColorValue, green: ColorValue, blue: ColorValue]
-  Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color, background: Color]
+  Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color,
+      background: Color]
 
 const schemeDir = "random-colors/schemas"
 const fishHookCode = staticRead("./hooks/hook.fish")
 
 proc `%`(color: Color): JsonNode =
-  return %* [color.red, color.green, color.blue ]
+  return %* [color.red, color.green, color.blue]
 
 proc `%`(scheme: Scheme): JsonNode =
   return %* [
@@ -29,21 +30,21 @@ proc `%`(scheme: Scheme): JsonNode =
       % scheme.background
     ]
 
-proc strip(str : string): string {.noSideEffect.} =
+proc strip(str: string): string {.noSideEffect.} =
   strutils.strip(str)
 
-proc toLocation(filename : string): Location =
+proc toLocation(filename: string): Location =
   let config = ospaths.getConfigDir()
   return Location ospaths.joinPath([config, schemeDir, filename])
 
-proc defaultLocation() : Location =
+proc defaultLocation(): Location =
   return toLocation("default")
 
 proc getLocation(): Location =
   let (key, code) =
     osproc.execCmdEx(
       "git rev-parse --show-toplevel --abbrev-ref HEAD",
-      options = { osproc.poUsePath }
+      options = {osproc.poUsePath}
     )
   if code == 0:
     return toLocation(strutils.toHex(strip(key)))
@@ -72,23 +73,24 @@ proc schemeFromJson(json: JsonNode): Scheme {.noSideEffect.} =
 proc requestScheme(): Scheme =
   let client = httpclient.newHttpClient()
   var body = %* {"model": "ui"}
-  let response = httpclient.postContent(client, "http://colormind.io/api/", pretty(body))
+  let response = httpclient.postContent(client, "http://colormind.io/api/",
+      pretty(body))
   let json = parseJson(response)
   return schemeFromJson(json["result"])
 
 proc schemeFilePath(location: Location): string {.noSideEffect.} =
   return string(location)
 
-proc saveScheme(location: Location, scheme : Scheme): void =
+proc saveScheme(location: Location, scheme: Scheme): void =
   let filename = schemeFilePath(location)
-  let content = pretty(% scheme)
+  let content = pretty( % scheme)
   os.createDir(ospaths.parentDir(filename))
   writeFile(filename, content)
 
-proc createSymlink(src : Location, destination : Location): void =
+proc createSymlink(src: Location, destination: Location): void =
   if not os.fileExists(schemeFilePath(destination)):
     os.createSymlink(schemeFilePath(src), schemeFilePath(destination))
-  
+
 proc newScheme(location: Location): Scheme =
   # Getting a colorscheme might take some time, might even fail if the colormind
   # website is down. To this end we will temporarily link to the default scheme
@@ -151,7 +153,7 @@ proc load(): void =
     scheme = newScheme(location)
   setScheme(scheme)
 
-proc makeAbsolute(path : string): string =
+proc makeAbsolute(path: string): string =
   if os.isAbsolute(path):
     return path
   else:
@@ -162,24 +164,37 @@ proc pathToSelfBin(): string =
   let path = os.paramStr(0)
   return makeAbsolute(path)
 
-proc hook(shell : string): void =
+proc hook(shell: string): void =
   case shell:
     of "fish":
       let bin = pathToSelfBin()
       let hookCode = re.replace(fishHookCode, re"random_colors_bin_path", bin)
       echo(hookCode)
     else:
-      write(stderr, fmt("Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
+      write(stderr, fmt(
+          "Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
       quit(QuitFailure)
 
 proc help(): void =
   echo("Usage: random-colors [OPTION]")
-  echo("Load a random terminal color scheme for the current git project branch.")
+  echo(
+
+
+
+
+
+                          "Load a random terminal color scheme for the current git project branch.")
   echo("If a scheme has already been generated for this branch, reload it.")
   echo("")
   echo("  --help       Show this help message")
   echo("  --refresh    Create a new color scheme for this branch.")
-  echo("               If a color scheme already exists, it will be overwritten.")
+  echo(
+
+
+
+
+
+                          "               If a color scheme already exists, it will be overwritten.")
   echo("  --hook       Enable random-colors for your fish shell session.")
   echo("               Usage: `random-colors --hook=fish | source`")
 
