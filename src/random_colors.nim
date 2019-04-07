@@ -29,22 +29,19 @@ proc `%`(scheme: Scheme): JsonNode =
       % scheme.background
     ]
 
-proc withDefault(str : string, default : string): string {.noSideEffect.} =
-  if str == "":
-    return default
-  else:
-    return str
-
 proc strip(str : string): string {.noSideEffect.} =
   strutils.strip(str)
 
 proc key(): string =
-  let (gitBranch, _) =
+  let (key, code) =
     osproc.execCmdEx(
       "git rev-parse --show-toplevel --abbrev-ref HEAD",
       options = { osproc.poUsePath }
     )
-  return strip(withDefault(gitBranch, "no-git"))
+  if code == 0:
+    return strip(key)
+  else:
+    return "no-git"
 
 proc getLocation(): Location =
   return Location strutils.toHex(key())
