@@ -77,8 +77,10 @@ proc schemeFilePath(location: Location): string =
   return ospaths.joinPath([home, schemeDir, string(location)])
 
 proc saveScheme(location: Location, scheme : Scheme): void =
+  let home = ospaths.getHomeDir()
   let filename = schemeFilePath(location)
   let content = pretty(% scheme)
+  os.createDir(ospaths.parentDir(filename))
   writeFile(filename, content)
 
 proc newScheme(location: Location): Scheme =
