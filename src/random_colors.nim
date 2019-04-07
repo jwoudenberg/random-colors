@@ -38,24 +38,13 @@ proc withDefault(str : string, default : string): string {.noSideEffect.} =
 proc strip(str : string): string {.noSideEffect.} =
   strutils.strip(str)
 
-proc root(): string =
-  let (gitRoot, _) =
-    osproc.execCmdEx(
-      "git rev-parse --show-toplevel",
-      options = { osproc.poUsePath }
-    )
-  return strip(withDefault(gitRoot, "no-git-root"))
-
-proc branch(): string =
+proc key(): string =
   let (gitBranch, _) =
     osproc.execCmdEx(
-      "git rev-parse --abbrev-ref HEAD",
+      "git rev-parse --show-toplevel --abbrev-ref HEAD",
       options = { osproc.poUsePath }
     )
-  return strip(withDefault(gitBranch, "no-git-branch"))
-
-proc key(): string =
-  "$1:$2" % [root(), branch()]
+  return strip(withDefault(gitBranch, "no-git"))
 
 proc getLocation(): Location =
   return Location strutils.toHex(key())
