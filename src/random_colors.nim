@@ -8,7 +8,7 @@ from parseopt import nil
 import json
 import strformat
 
-const schemeDir = ".colorschemes"
+const schemeDir = "random-colors/schemas"
 const fishHookCode = staticRead("./hooks/hook.fish")
 
 type
@@ -73,8 +73,8 @@ proc requestScheme(): Scheme =
   return schemeFromJson(json["result"])
 
 proc schemeFilePath(location: Location): string =
-  let home = ospaths.getHomeDir()
-  return ospaths.joinPath([home, schemeDir, string(location)])
+  let config = ospaths.getConfigDir()
+  return ospaths.joinPath([config, schemeDir, string(location)])
 
 proc saveScheme(location: Location, scheme : Scheme): void =
   let home = ospaths.getHomeDir()
