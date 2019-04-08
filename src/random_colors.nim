@@ -177,24 +177,12 @@ proc hook(shell: string): void =
 
 proc help(): void =
   echo("Usage: random-colors [OPTION]")
-  echo(
-
-
-
-
-
-                          "Load a random terminal color scheme for the current git project branch.")
+  echo("Load a random terminal color scheme for the current git branch.")
   echo("If a scheme has already been generated for this branch, reload it.")
   echo("")
   echo("  --help       Show this help message")
   echo("  --refresh    Create a new color scheme for this branch.")
-  echo(
-
-
-
-
-
-                          "               If a color scheme already exists, it will be overwritten.")
+  echo("               If one already exists, it will be overwritten.")
   echo("  --hook       Enable random-colors for your fish shell session.")
   echo("               Usage: `random-colors --hook=fish | source`")
 
