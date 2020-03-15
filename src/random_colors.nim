@@ -153,21 +153,10 @@ proc load(): void =
     scheme = newScheme(location)
   setScheme(scheme)
 
-proc makeAbsolute(path: string): string =
-  if os.isAbsolute(path):
-    return path
-  else:
-    let cwd = os.getCurrentDir()
-    return ospaths.joinPath([cwd, path])
-
-proc pathToSelfBin(): string =
-  let path = os.paramStr(0)
-  return makeAbsolute(path)
-
 proc hook(shell: string): void =
   case shell:
     of "fish":
-      let bin = pathToSelfBin()
+      let bin = os.getAppFilename()
       let hookCode = re.replace(fishHookCode, re"random_colors_bin_path", bin)
       echo(hookCode)
     else:
