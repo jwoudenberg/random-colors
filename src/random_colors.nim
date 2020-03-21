@@ -8,12 +8,12 @@ from parseopt import nil
 import json
 import strformat
 
-type
-  Location = distinct (string)
-  ColorValue = range[0..256]
-  Color = tuple[red: ColorValue, green: ColorValue, blue: ColorValue]
-  Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color,
+type Location = distinct (string)
+type ColorValue = range[0..256]
+type Color = tuple[red: ColorValue, green: ColorValue, blue: ColorValue]
+type Scheme = tuple[foreground: Color, light: Color, main: Color, dark: Color,
       background: Color]
+type Term = enum iterm, xterm
 
 const schemeDir = "random-colors/schemas"
 const fishHookCode = staticRead("./hooks/hook.fish")
@@ -108,7 +108,8 @@ proc readScheme(location: Location): Scheme =
   let json = parseJson(content)
   return schemeFromJson(json)
 
-proc setColor(key: string, color: Color): string {.noSideEffect.} =
+proc setColorIterm(key: string, color: Color): string {.
+    noSideEffect.} =
   let hex = "$1$2$3" % [
     strutils.toHex(color.red, 2),
     strutils.toHex(color.green, 2),
@@ -118,40 +119,80 @@ proc setColor(key: string, color: Color): string {.noSideEffect.} =
   # See: https://iterm2.com/documentation-escape-codes.html
   "\x1b]1337;SetColors=$1=$2\x07" % [key, hex]
 
-proc setScheme(scheme: Scheme): void =
-  write(stdout, setColor("fg", scheme.foreground))
-  write(stdout, setColor("bg", scheme.background))
-  write(stdout, setColor("black", scheme.background))
-  write(stdout, setColor("red", scheme.dark))
-  write(stdout, setColor("green", scheme.main))
-  write(stdout, setColor("yellow", scheme.light))
-  write(stdout, setColor("blue", scheme.main))
-  write(stdout, setColor("magenta", scheme.dark))
-  write(stdout, setColor("cyan", scheme.light))
-  write(stdout, setColor("white", scheme.foreground))
-  write(stdout, setColor("br_black", scheme.background))
-  write(stdout, setColor("br_red", scheme.dark))
-  write(stdout, setColor("br_green", scheme.main))
-  write(stdout, setColor("br_yellow", scheme.light))
-  write(stdout, setColor("br_blue", scheme.main))
-  write(stdout, setColor("br_magenta", scheme.dark))
-  write(stdout, setColor("br_cyan", scheme.light))
-  write(stdout, setColor("br_white", scheme.foreground))
+proc setColorXterm(key: string, color: Color): string {.
+    noSideEffect.} =
+  let hex = "$1$2$3" % [
+    strutils.toHex(color.red, 2),
+    strutils.toHex(color.green, 2),
+    strutils.toHex(color.blue, 2)
+  ]
+  # This is an XTerm escape code for setting terminal colors. Many other
+  # terminals also support them.
+  # See: http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#XTerm_Operating_System_Commands
+  "\x1b]$1;#$2\x07" % [key, hex]
+
+proc setSchemeIterm(scheme: Scheme): void =
+  write(stdout, setColorIterm("fg", scheme.foreground))
+  write(stdout, setColorIterm("bg", scheme.background))
+  write(stdout, setColorIterm("black", scheme.background))
+  write(stdout, setColorIterm("red", scheme.dark))
+  write(stdout, setColorIterm("green", scheme.main))
+  write(stdout, setColorIterm("yellow", scheme.light))
+  write(stdout, setColorIterm("blue", scheme.main))
+  write(stdout, setColorIterm("magenta", scheme.dark))
+  write(stdout, setColorIterm("cyan", scheme.light))
+  write(stdout, setColorIterm("white", scheme.foreground))
+  write(stdout, setColorIterm("br_black", scheme.background))
+  write(stdout, setColorIterm("br_red", scheme.dark))
+  write(stdout, setColorIterm("br_green", scheme.main))
+  write(stdout, setColorIterm("br_yellow", scheme.light))
+  write(stdout, setColorIterm("br_blue", scheme.main))
+  write(stdout, setColorIterm("br_magenta", scheme.dark))
+  write(stdout, setColorIterm("br_cyan", scheme.light))
+  write(stdout, setColorIterm("br_white", scheme.foreground))
   flushFile(stdout)
 
-proc refresh(): void =
+proc setSchemeXterm(scheme: Scheme): void =
+  write(stdout, setColorXterm("10", scheme.foreground))
+  write(stdout, setColorXterm("11", scheme.background))
+  write(stdout, setColorXterm("4;0", scheme.background))
+  write(stdout, setColorXterm("4;1", scheme.dark))
+  write(stdout, setColorXterm("4;2", scheme.main))
+  write(stdout, setColorXterm("4;3", scheme.light))
+  write(stdout, setColorXterm("4;4", scheme.main))
+  write(stdout, setColorXterm("4;5", scheme.dark))
+  write(stdout, setColorXterm("4;6", scheme.light))
+  write(stdout, setColorXterm("4;7", scheme.foreground))
+  write(stdout, setColorXterm("4;8", scheme.background))
+  write(stdout, setColorXterm("4;9", scheme.dark))
+  write(stdout, setColorXterm("4;10", scheme.main))
+  write(stdout, setColorXterm("4;11", scheme.light))
+  write(stdout, setColorXterm("4;12", scheme.main))
+  write(stdout, setColorXterm("4;13", scheme.dark))
+  write(stdout, setColorXterm("4;14", scheme.light))
+  write(stdout, setColorXterm("4;15", scheme.foreground))
+  flushFile(stdout)
+
+proc setScheme(term: Term, scheme: Scheme): void =
+  case term:
+    of xterm:
+      setSchemeXterm(scheme)
+    of iterm:
+      setSchemeIterm(scheme)
+
+proc refresh(term: Term): void =
   let location = getLocation()
   let scheme = newScheme(location)
-  setScheme(scheme)
+  setScheme(term, scheme)
 
-proc load(): void =
+proc load(term: Term): void =
   let location = getLocation()
   var scheme: Scheme
   try:
     scheme = readScheme(location)
   except IOError:
     scheme = newScheme(location)
-  setScheme(scheme)
+  setScheme(term, scheme)
 
 proc hook(shell: string): void =
   case shell:
@@ -170,16 +211,22 @@ proc help(): void =
   echo("If a scheme has already been generated for this branch, reload it.")
   echo("")
   echo("  --help       Show this help message")
+  echo("  --iterm      Use iterm escape codes for changing color schemes.")
+  echo("               If not passed xterm-compatible escape codes are used.")
   echo("  --refresh    Create a new color scheme for this branch.")
   echo("               If one already exists, it will be overwritten.")
   echo("  --hook       Enable random-colors for your fish shell session.")
   echo("               Usage: `random-colors --hook=fish | source`")
 
 proc main(): void =
+  var term = xterm
   for kind, key, val in parseopt.getopt():
     case key:
+      of "iterm":
+        term = iterm
+        break
       of "refresh":
-        refresh()
+        refresh(term)
         return
       of "help":
         help()
@@ -191,6 +238,6 @@ proc main(): void =
         write(stderr, "Unknown command line argument: $1\n\n" % key)
         help()
         quit(QuitFailure)
-  load()
+  load(term)
 
 main()
