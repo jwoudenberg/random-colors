@@ -193,6 +193,12 @@ proc load(term: Term): void =
     scheme = newScheme(location)
   setScheme(term, scheme)
 
+proc getTerm(): Term =
+  let termAppEnv = os.getEnv("TERM_PROGRAM")
+  case termAppEnv:
+    of "iTerm.app": iterm
+    else: xterm
+
 proc hook(shell: string): void =
   case shell:
     of "fish":
@@ -210,20 +216,15 @@ proc help(): void =
   echo("If a scheme has already been generated for this branch, reload it.")
   echo("")
   echo("  --help       Show this help message")
-  echo("  --iterm      Use iterm escape codes for changing color schemes.")
-  echo("               If not passed xterm-compatible escape codes are used.")
   echo("  --refresh    Create a new color scheme for this branch.")
   echo("               If one already exists, it will be overwritten.")
   echo("  --hook       Enable random-colors for your fish shell session.")
   echo("               Usage: `random-colors --hook=fish | source`")
 
 proc main(): void =
-  var term = xterm
+  let term = getTerm()
   for kind, key, val in parseopt.getopt():
     case key:
-      of "iterm":
-        term = iterm
-        break
       of "refresh":
         refresh(term)
         return
