@@ -1,5 +1,4 @@
 from os import nil
-from ospaths import nil
 from osproc import nil
 from re import `re`
 from strutils import `%`
@@ -34,8 +33,8 @@ proc strip(str: string): string {.noSideEffect.} =
   strutils.strip(str)
 
 proc toLocation(filename: string): Location =
-  let config = ospaths.getConfigDir()
-  return Location ospaths.joinPath([config, schemeDir, filename])
+  let config = os.getConfigDir()
+  return Location os.joinPath([config, schemeDir, filename])
 
 proc defaultLocation(): Location =
   return toLocation("default")
@@ -84,7 +83,7 @@ proc schemeFilePath(location: Location): string {.noSideEffect.} =
 proc saveScheme(location: Location, scheme: Scheme): void =
   let filename = schemeFilePath(location)
   let content = pretty( % scheme)
-  os.createDir(ospaths.parentDir(filename))
+  os.createDir(os.parentDir(filename))
   writeFile(filename, content)
 
 proc createSymlink(src: Location, destination: Location): void =
