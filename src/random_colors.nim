@@ -16,6 +16,7 @@ type Term = enum iterm, xterm
 
 const schemeDir = "random-colors/schemas"
 const fishHookCode = staticRead("./hooks/hook.fish")
+const bashHookCode = staticRead("./hooks/hook.bash")
 
 proc `%`(color: Color): JsonNode =
   return %* [color.red, color.green, color.blue]
@@ -200,15 +201,17 @@ proc getTerm(): Term =
     else: xterm
 
 proc hook(shell: string): void =
-  case shell:
-    of "fish":
-      let bin = os.getAppFilename()
-      let hookCode = re.replace(fishHookCode, re"random_colors_bin_path", bin)
-      echo(hookCode)
-    else:
-      write(stderr, fmt(
-          "Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
-      quit(QuitFailure)
+  let bin = os.getAppFilename()
+  let hookCodeTemplate =
+    case shell:
+      of "fish": fishHookCode
+      of "bash": bashHookCode
+      else:
+        write(stderr, fmt(
+            "Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
+        quit(QuitFailure)
+  let hookCode = re.replace(hookCodeTemplate, re"random_colors_bin_path", bin)
+  echo(hookCode)
 
 proc help(): void =
   echo("Usage: random-colors [OPTION]")
@@ -218,8 +221,9 @@ proc help(): void =
   echo("  --help       Show this help message")
   echo("  --refresh    Create a new color scheme for this branch.")
   echo("               If one already exists, it will be overwritten.")
-  echo("  --hook       Enable random-colors for your fish shell session.")
-  echo("               Usage: `random-colors --hook=fish | source`")
+  echo("  --hook       Enable random-colors for your shell session.")
+  echo("               For bash: `eval \"$(random-colors --hook=bash)\"")
+  echo("               For fish: `random-colors --hook=fish | source`")
 
 proc main(): void =
   let term = getTerm()
