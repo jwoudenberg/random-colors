@@ -4,9 +4,11 @@ pkgs.stdenv.mkDerivation rec {
   name = "random-colors-${version}";
   version = "0.1.0";
   depsBuildBuild = [ pkgs.nim ];
+  buildInputs = [ pkgs.pcre ];
   src = ./src;
   buildPhase = ''
     nim compile \
+      -d:release \
       --nimcache:$TMPDIR \
       --out:$TMPDIR/random-colors \
       ${src}/random_colors.nim
@@ -16,6 +18,8 @@ pkgs.stdenv.mkDerivation rec {
       $out/bin \
       $TMPDIR/random-colors
   '';
+
+  NIX_LDFLAGS = "-lpcre";
 
   meta = with pkgs.stdenv.lib; {
     description = "A tool generating random cli colorschemes for all projects and branches.";
