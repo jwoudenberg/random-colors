@@ -35,6 +35,7 @@ proc strip(str: string): string {.noSideEffect.} =
 
 proc toLocation(filename: string): Location =
   let config = os.getConfigDir()
+  os.createDir(os.joinPath([config, schemeDir]))
   return Location os.joinPath([config, schemeDir, filename])
 
 proc defaultLocation(): Location =
