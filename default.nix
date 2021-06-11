@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs }:
 
 pkgs.stdenv.mkDerivation rec {
   name = "random-colors-${version}";
@@ -21,9 +21,10 @@ pkgs.stdenv.mkDerivation rec {
 
   NIX_LDFLAGS = "-lpcre";
 
-  meta = with pkgs.stdenv.lib; {
-    description = "A tool generating random cli colorschemes for all projects and branches.";
-    homepage = https://github.com/jwoudenberg/random-colorscheme;
+  meta = with pkgs.lib; {
+    description =
+      "A tool generating random cli colorschemes for all projects and branches.";
+    homepage = "https://github.com/jwoudenberg/random-colorscheme";
     license = licenses.mit;
     platforms = with platforms; linux ++ darwin;
   };
