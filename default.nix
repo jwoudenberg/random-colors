@@ -7,16 +7,17 @@ pkgs.stdenv.mkDerivation rec {
   buildInputs = [ pkgs.pcre ];
   src = ./src;
   buildPhase = ''
+    TMP=$(realpath .)
     nim compile \
       -d:release \
-      --nimcache:$TMPDIR \
-      --out:$TMPDIR/random-colors \
+      --nimcache:$TMP \
+      --out:random-colors \
       ${src}/random_colors.nim
   '';
   installPhase = ''
     install -Dt \
       $out/bin \
-      $TMPDIR/random-colors
+      random-colors
   '';
 
   NIX_LDFLAGS = "-lpcre";
