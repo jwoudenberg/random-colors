@@ -2,6 +2,7 @@ from os import nil
 from osproc import nil
 from re import `re`
 from strutils import `%`
+from md5 import nil
 from httpclient import nil
 from parseopt import nil
 import json
@@ -48,7 +49,7 @@ proc getLocation(): Location =
       options = {osproc.poUsePath}
     )
   if code == 0:
-    return toLocation(strutils.toHex(strip(key)))
+    return toLocation(md5.getMD5(key.strip))
   else:
     return defaultLocation()
 
