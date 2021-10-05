@@ -8,6 +8,7 @@ I tested `random-colors` with these terminals:
 
 - iTerm
 - Alacritty
+- Kitty
 
 It probably works with other xterm-compatible terminals. If you've had success using `random-colors` on a different terminal, please let me know in a Github issue!
 
@@ -37,7 +38,7 @@ echo 'eval "$(random-colors --hook=bash)"' >> ~/.bashrc
 For fish:
 
 ```
-echo `random-colors --hook=fish | source` >> ~/.config/fish/config.fish
+echo 'random-colors --hook=fish | source' >> ~/.config/fish/config.fish
 ```
 
 ## Usage

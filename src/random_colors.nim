@@ -2,6 +2,7 @@ from os import nil
 from osproc import nil
 from re import `re`
 from strutils import `%`
+from md5 import nil
 from httpclient import nil
 from parseopt import nil
 import json
@@ -48,7 +49,7 @@ proc getLocation(): Location =
       options = {osproc.poUsePath}
     )
   if code == 0:
-    return toLocation(strutils.toHex(strip(key)))
+    return toLocation(md5.getMD5(key.strip))
   else:
     return defaultLocation()
 
@@ -209,7 +210,7 @@ proc hook(shell: string): void =
       of "bash": bashHookCode
       else:
         write(stderr, fmt(
-            "Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
+            "Unsupported shell {shell}. Only `fish` and `bash` are currently supported\n\n"))
         quit(QuitFailure)
   let hookCode = re.replace(hookCodeTemplate, re"random_colors_bin_path", bin)
   echo(hookCode)
