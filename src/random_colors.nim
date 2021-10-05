@@ -210,7 +210,7 @@ proc hook(shell: string): void =
       of "bash": bashHookCode
       else:
         write(stderr, fmt(
-            "Unsupported shell {shell}. Only `fish` is currently supported\n\n"))
+            "Unsupported shell {shell}. Only `fish` and `bash` are currently supported\n\n"))
         quit(QuitFailure)
   let hookCode = re.replace(hookCodeTemplate, re"random_colors_bin_path", bin)
   echo(hookCode)
