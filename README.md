@@ -38,7 +38,7 @@ echo 'eval "$(random-colors --hook=bash)"' >> ~/.bashrc
 For fish:
 
 ```
-echo `random-colors --hook=fish | source` >> ~/.config/fish/config.fish
+echo 'random-colors --hook=fish | source' >> ~/.config/fish/config.fish
 ```
 
 ## Usage
